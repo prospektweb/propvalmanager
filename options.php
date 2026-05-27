@@ -1,9 +1,9 @@
 <?php
 
-define('ADMIN_MODULE_NAME', 'prospektweb.aspremieruiseo');
+define('ADMIN_MODULE_NAME', 'prospektweb.uiseooptimt');
 
 use Bitrix\Main\Loader;
-use Prospektweb\AsproPremierUiSeo\Service\ModuleConfig;
+use Prospektweb\UiSeoOptimT\Service\ModuleConfig;
 
 if (!$USER->IsAdmin()) {
     return;

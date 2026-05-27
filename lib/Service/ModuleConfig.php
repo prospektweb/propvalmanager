@@ -1,12 +1,12 @@
 <?php
 
-namespace Prospektweb\AsproPremierUiSeo\Service;
+namespace Prospektweb\UiSeoOptimT\Service;
 
 use Bitrix\Main\Config\Option;
 
 final class ModuleConfig
 {
-    public const MODULE_ID = 'prospektweb.aspremieruiseo';
+    public const MODULE_ID = 'prospektweb.uiseooptimt';
 
     public const ENABLED = 'ENABLED';
     public const PRODUCTS_IBLOCK_ID = 'PRODUCTS_IBLOCK_ID';

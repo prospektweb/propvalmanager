@@ -1,6 +1,6 @@
 <?php
 
-namespace Prospektweb\AsproPremierUiSeo\Service;
+namespace Prospektweb\UiSeoOptimT\Service;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;

@@ -5,10 +5,10 @@ defined('B_PROLOG_INCLUDED') || die;
 use Bitrix\Main\Loader;
 
 Loader::registerAutoLoadClasses(
-    'prospektweb.aspremieruiseo',
+    'prospektweb.uiseooptimt',
     [
-        'Prospektweb\\AsproPremierUiSeo\\Service\\ModuleConfig' => 'lib/Service/ModuleConfig.php',
-        'Prospektweb\\AsproPremierUiSeo\\Service\\PropertyManager' => 'lib/Service/PropertyManager.php',
-        'Prospektweb\\AsproPremierUiSeo\\Service\\AsproTemplatePatcher' => 'lib/Service/AsproTemplatePatcher.php',
+        'Prospektweb\\UiSeoOptimT\\Service\\ModuleConfig' => 'lib/Service/ModuleConfig.php',
+        'Prospektweb\\UiSeoOptimT\\Service\\PropertyManager' => 'lib/Service/PropertyManager.php',
+        'Prospektweb\\UiSeoOptimT\\Service\\AsproTemplatePatcher' => 'lib/Service/AsproTemplatePatcher.php',
     ]
 );

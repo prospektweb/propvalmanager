@@ -1,3 +1,3 @@
 (function () {
-    console.log('prospektweb.aspremieruiseo loaded');
+    console.log('prospektweb.uiseooptimt loaded');
 })();

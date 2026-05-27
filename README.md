@@ -1,4 +1,4 @@
-# Aspro Premier UI/SEO Transformer (`prospektweb.aspremieruiseo`)
+# UI/SEO Optim Transformer (`prospektweb.uiseooptimt`)
 
 Bitrix-модуль для управляемых UI/SEO доработок Aspro Premier и безопасного управления свойствами инфоблоков.
 
@@ -18,7 +18,7 @@ Bitrix-модуль для управляемых UI/SEO доработок Aspr
 - `assets/*` — ресурсы модуля.
 
 ## Установка
-1. Поместите папку модуля в `/local/modules/prospektweb.aspremieruiseo`.
+1. Поместите папку модуля в `/local/modules/prospektweb.uiseooptimt`.
 2. В панели Bitrix: **Marketplace → Установленные решения → Установить**.
 3. На шаге настроек укажите ID инфоблока товаров (обязательно для тестового свойства `TR_CASE`) и при необходимости ID ТП.
 
@@ -30,7 +30,7 @@ Bitrix-модуль для управляемых UI/SEO доработок Aspr
 3. Модуль восстановит оригинальные Aspro-файлы из backup.
 
 ## Настройки
-В `Настройки → Настройки продукта → Настройки модулей → Aspro Premier UI/SEO Transformer`:
+В `Настройки → Настройки продукта → Настройки модулей → UI/SEO Optim Transformer`:
 - `ENABLED`
 - `PRODUCTS_IBLOCK_ID`
 - `OFFERS_IBLOCK_ID`

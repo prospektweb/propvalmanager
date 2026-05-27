@@ -3,16 +3,16 @@
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Prospektweb\AsproPremierUiSeo\Service\AsproTemplatePatcher;
-use Prospektweb\AsproPremierUiSeo\Service\ModuleConfig;
-use Prospektweb\AsproPremierUiSeo\Service\PropertyManager;
+use Prospektweb\UiSeoOptimT\Service\AsproTemplatePatcher;
+use Prospektweb\UiSeoOptimT\Service\ModuleConfig;
+use Prospektweb\UiSeoOptimT\Service\PropertyManager;
 
 Loc::loadMessages(__FILE__);
 
-class prospektweb_aspremieruiseo extends CModule
+class prospektweb_uiseooptimt extends CModule
 {
-    public $MODULE_ID = 'prospektweb.aspremieruiseo';
-    public $MODULE_NAME = 'Aspro Premier UI/SEO Transformer';
+    public $MODULE_ID = 'prospektweb.uiseooptimt';
+    public $MODULE_NAME = 'UI/SEO Optim Transformer';
     public $MODULE_DESCRIPTION = 'UI/SEO улучшения и управление свойствами для Aspro Premier';
     public $PARTNER_NAME = 'Prospektweb';
     public $PARTNER_URI = 'https://prospektweb.ru';

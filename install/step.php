@@ -3,4 +3,4 @@ if (!check_bitrix_sessid()) {
     return;
 }
 
-echo CAdminMessage::ShowNote('Модуль prospektweb.aspremieruiseo успешно установлен.');
+echo CAdminMessage::ShowNote('Модуль prospektweb.uiseooptimt успешно установлен.');
