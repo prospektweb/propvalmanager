@@ -12,9 +12,9 @@ Loc::loadMessages(__FILE__);
 class prospektweb_uiseooptimt extends CModule
 {
     public $MODULE_ID = 'prospektweb.uiseooptimt';
-    public $MODULE_NAME = 'UI/SEO Optim Transformer';
+    public $MODULE_NAME = 'PROSPEKT-WEB: UI/SEO Optim Transformer';
     public $MODULE_DESCRIPTION = 'UI/SEO улучшения и управление свойствами для Aspro Premier';
-    public $PARTNER_NAME = 'Prospektweb';
+    public $PARTNER_NAME = 'PROSPEKT-WEB';
     public $PARTNER_URI = 'https://prospektweb.ru';
 
     public function __construct()
