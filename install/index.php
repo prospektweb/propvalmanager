@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Catalog\CatalogIblockTable;
 use Bitrix\Iblock\IblockTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
@@ -49,21 +50,16 @@ class prospektweb_uiseooptimt extends CModule
         }
 
         try {
-            $productsId = (int)$request->getPost('PRODUCTS_IBLOCK_ID');
-            $offersId = (int)$request->getPost('OFFERS_IBLOCK_ID');
+            [$productsIblockId, $offersIblockId] = $this->resolveIblocks();
 
-            if ($productsId <= 0) {
-                throw new RuntimeException('Не выбран инфоблок товаров.');
-            }
-
-            ModuleConfig::setProductsIblockId($productsId);
-            ModuleConfig::setOffersIblockId($offersId);
+            ModuleConfig::setProductsIblockId($productsIblockId);
+            ModuleConfig::setOffersIblockId($offersIblockId);
             ModuleConfig::setEnabled(true);
 
             RegisterModule($this->MODULE_ID);
             Loader::includeModule($this->MODULE_ID);
 
-            $this->InstallDB();
+            (new PropertyManager())->ensureTrCaseProperty($productsIblockId);
             $this->InstallFiles();
             $this->registerEvents();
 
@@ -102,10 +98,10 @@ class prospektweb_uiseooptimt extends CModule
 
     public function InstallDB(): bool
     {
-        (new PropertyManager())->ensureProperties(
-            ModuleConfig::getProductsIblockId(),
-            ModuleConfig::getOffersIblockId()
-        );
+        [$productsIblockId, $offersIblockId] = $this->resolveIblocks();
+        ModuleConfig::setProductsIblockId($productsIblockId);
+        ModuleConfig::setOffersIblockId($offersIblockId);
+        (new PropertyManager())->ensureTrCaseProperty($productsIblockId);
 
         return true;
     }
@@ -135,19 +131,78 @@ class prospektweb_uiseooptimt extends CModule
     /** @return array<int, array{id:int,name:string,selected:bool}> */
     public function getProductsIblockList(): array
     {
-        $detected = $this->detectCatalogIblocks();
-        $selectedId = ModuleConfig::getProductsIblockId() ?: $detected['products'];
+        [$productsIblockId] = $this->resolveIblocks();
 
-        return $this->getIblockList($selectedId);
+        return $this->getIblockList($productsIblockId);
     }
 
     /** @return array<int, array{id:int,name:string,selected:bool}> */
     public function getOffersIblockList(): array
     {
-        $detected = $this->detectCatalogIblocks();
-        $selectedId = ModuleConfig::getOffersIblockId() ?: $detected['offers'];
+        [, $offersIblockId] = $this->resolveIblocks();
 
-        return $this->getIblockList($selectedId);
+        return $this->getIblockList($offersIblockId);
+    }
+
+    /** @return array{0:int,1:int} */
+    public function resolveIblocks(): array
+    {
+        $productsIblockId = (int)($_REQUEST['PRODUCTS_IBLOCK_ID'] ?? 0);
+        $offersIblockId = (int)($_REQUEST['OFFERS_IBLOCK_ID'] ?? 0);
+
+        if ($productsIblockId > 0 && $offersIblockId > 0) {
+            return [$productsIblockId, $offersIblockId];
+        }
+
+        $row = CatalogIblockTable::getList([
+            'select' => ['IBLOCK_ID', 'PRODUCT_IBLOCK_ID'],
+            'filter' => ['!=PRODUCT_IBLOCK_ID' => 0],
+            'order' => ['IBLOCK_ID' => 'ASC'],
+            'limit' => 1,
+        ])->fetch();
+
+        if ($row) {
+            if ($offersIblockId <= 0) {
+                $offersIblockId = (int)$row['IBLOCK_ID'];
+            }
+
+            if ($productsIblockId <= 0) {
+                $productsIblockId = (int)$row['PRODUCT_IBLOCK_ID'];
+            }
+        }
+
+        if ($offersIblockId > 0 && $productsIblockId <= 0 && class_exists('CCatalogSKU')) {
+            $sku = \CCatalogSKU::GetInfoByOfferIBlock($offersIblockId);
+            if (is_array($sku) && !empty($sku['PRODUCT_IBLOCK_ID'])) {
+                $productsIblockId = (int)$sku['PRODUCT_IBLOCK_ID'];
+            }
+        }
+
+        if ($productsIblockId <= 0 || $offersIblockId <= 0) {
+            $propRes = \CIBlockProperty::GetList(
+                ['ID' => 'ASC'],
+                [
+                    'ACTIVE' => 'Y',
+                    'PROPERTY_TYPE' => 'E',
+                    'USER_TYPE' => 'SKU',
+                ]
+            );
+
+            if ($prop = $propRes->Fetch()) {
+                if ($offersIblockId <= 0) {
+                    $offersIblockId = (int)$prop['IBLOCK_ID'];
+                }
+
+                if ($productsIblockId <= 0) {
+                    $productsIblockId = (int)$prop['LINK_IBLOCK_ID'];
+                }
+            }
+        }
+
+        return [
+            max(0, (int)$productsIblockId),
+            max(0, (int)$offersIblockId),
+        ];
     }
 
     private function checkDependencies(): void
@@ -169,34 +224,6 @@ class prospektweb_uiseooptimt extends CModule
 
         UnRegisterModule($this->MODULE_ID);
         AddMessage2Log('Rollback установки ' . $this->MODULE_ID . ': ' . $reason);
-    }
-
-
-    /** @return array{products:int,offers:int} */
-    private function detectCatalogIblocks(): array
-    {
-        $detected = ['products' => 0, 'offers' => 0];
-        if (!class_exists('CCatalog') || !method_exists('CCatalog', 'GetList')) {
-            return $detected;
-        }
-
-        $catalogs = CCatalog::GetList([], []);
-        while ($catalog = $catalogs->Fetch()) {
-            $iblockId = (int)($catalog['IBLOCK_ID'] ?? 0);
-            $productIblockId = (int)($catalog['PRODUCT_IBLOCK_ID'] ?? 0);
-
-            if ($productIblockId > 0 && $detected['offers'] <= 0) {
-                $detected['offers'] = $iblockId;
-                $detected['products'] = $productIblockId;
-                continue;
-            }
-
-            if ($detected['products'] <= 0 && $iblockId > 0) {
-                $detected['products'] = $iblockId;
-            }
-        }
-
-        return $detected;
     }
 
     /** @return array<int, array{id:int,name:string,selected:bool}> */

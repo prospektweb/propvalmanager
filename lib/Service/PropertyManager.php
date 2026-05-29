@@ -17,34 +17,55 @@ final class PropertyManager
     /** @return array<string, mixed> */
     public function ensureProperties(int $productsIblockId, int $offersIblockId = 0): array
     {
-        if (!Loader::includeModule('iblock')) {
-            throw new Exception('Модуль iblock не подключен.');
+        $action = $this->ensureTrCaseProperty($productsIblockId);
+
+        return [
+            'created' => $action === 'created' ? ['TR_CASE'] : [],
+            'updated' => [],
+            'exists' => $action === 'exists' ? ['TR_CASE'] : [],
+            'offers_iblock_id' => $offersIblockId,
+        ];
+    }
+
+    public function ensureTrCaseProperty(int $productsIblockId): string
+    {
+        $productsIblockId = (int)$productsIblockId;
+
+        if ($productsIblockId <= 0 || !Loader::includeModule('iblock')) {
+            return 'skipped';
         }
 
-        if ($productsIblockId <= 0) {
-            throw new Exception('Не задан ID инфоблока товаров для создания TR_CASE.');
+        $existing = CIBlockProperty::GetList(
+            ['ID' => 'ASC'],
+            [
+                'IBLOCK_ID' => $productsIblockId,
+                'CODE' => 'TR_CASE',
+            ]
+        )->Fetch();
+
+        if ($existing) {
+            return 'exists';
         }
 
-        $created = [];
-        $updated = [];
-
-        $result = $this->ensureProperty($productsIblockId, [
-            'NAME' => 'TR CASE (падежи товара)',
+        $property = new CIBlockProperty();
+        $propertyId = $property->Add([
+            'IBLOCK_ID' => $productsIblockId,
+            'NAME' => 'Склонение наименования',
+            'ACTIVE' => 'Y',
+            'SORT' => 500,
             'CODE' => 'TR_CASE',
             'PROPERTY_TYPE' => 'S',
             'MULTIPLE' => 'Y',
             'IS_REQUIRED' => 'N',
-            'ACTIVE' => 'Y',
         ]);
-        if ($result['action'] === 'created') {
-            $created[] = $result['code'];
-        } else {
-            $updated[] = $result['code'];
+
+        if (!$propertyId) {
+            throw new Exception('Не удалось создать свойство TR_CASE: ' . (string)$property->LAST_ERROR);
         }
 
-        $sectionAction = $this->ensureSectionUserField($productsIblockId);
+        $this->trackProperty($productsIblockId, 'TR_CASE');
 
-        return ['created' => $created, 'updated' => $updated, 'section_uf' => $sectionAction, 'offers_iblock_id' => $offersIblockId];
+        return 'created';
     }
 
     public function removeManagedProperties(int $productsIblockId, int $offersIblockId = 0): void
