@@ -1,7 +1,6 @@
 <?php
 
 use Bitrix\Catalog\CatalogIblockTable;
-use Bitrix\Iblock\IblockTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -45,12 +44,16 @@ class prospektweb_uiseooptimt extends CModule
         }
 
         if ($request->getPost('install_step') !== '2') {
+            $this->prepareInstallStepData();
             $APPLICATION->IncludeAdminFile('Установка модуля', __DIR__ . '/step.php');
             return;
         }
 
         try {
             [$productsIblockId, $offersIblockId] = $this->resolveIblocks();
+            if ($productsIblockId <= 0) {
+                throw new RuntimeException('Не удалось определить инфоблок товаров. Выберите PRODUCTS_IBLOCK_ID вручную.');
+            }
 
             ModuleConfig::setProductsIblockId($productsIblockId);
             ModuleConfig::setOffersIblockId($offersIblockId);
@@ -125,7 +128,19 @@ class prospektweb_uiseooptimt extends CModule
 
     public function UnInstallFiles(): bool
     {
+        // Важно: не удаляем директорию модуля и установочные файлы.
         return true;
+    }
+
+
+    private function prepareInstallStepData(): void
+    {
+        [$productsIblockId, $offersIblockId] = $this->resolveIblocks();
+
+        $GLOBALS['PROSPEKTWEB_UISEOOPTIMT_PRODUCTS_IBLOCKS'] = $this->getIblockList($productsIblockId);
+        $GLOBALS['PROSPEKTWEB_UISEOOPTIMT_OFFERS_IBLOCKS'] = $this->getIblockList($offersIblockId);
+        $GLOBALS['PROSPEKTWEB_UISEOOPTIMT_PRODUCTS_IBLOCK_ID'] = $productsIblockId;
+        $GLOBALS['PROSPEKTWEB_UISEOOPTIMT_OFFERS_IBLOCK_ID'] = $offersIblockId;
     }
 
     /** @return array<int, array{id:int,name:string,selected:bool}> */
@@ -230,12 +245,12 @@ class prospektweb_uiseooptimt extends CModule
     private function getIblockList(int $selectedId = 0): array
     {
         $items = [];
-        $rows = IblockTable::getList([
-            'select' => ['ID', 'NAME'],
-            'order' => ['ID' => 'ASC'],
-        ]);
+        if (!Loader::includeModule('iblock') || !class_exists('CIBlock')) {
+            return $items;
+        }
 
-        while ($row = $rows->fetch()) {
+        $rows = \CIBlock::GetList(['ID' => 'ASC'], [], false);
+        while ($row = $rows->Fetch()) {
             $iblockId = (int)$row['ID'];
             $items[] = [
                 'id' => $iblockId,
