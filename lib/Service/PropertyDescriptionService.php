@@ -148,7 +148,7 @@ final class PropertyDescriptionService
             'select' => [
                 'ID', 'UF_IBLOCK_ID', 'UF_PROPERTY_ID', 'UF_PROPERTY_CODE', 'UF_VALUE_XML_ID', 'UF_TITLE',
                 'UF_SHORT_TEXT', 'UF_DESCRIPTION', 'UF_HINT', 'UF_LINK', 'UF_LINK_TEXT', 'UF_COLOR',
-                'UF_TEXT_COLOR', 'UF_ICON', 'UF_SORT', 'UF_EXTRA_JSON',
+                'UF_TEXT_COLOR', 'UF_ICON', 'UF_IMAGE', 'UF_DOCUMENT', 'UF_SORT', 'UF_EXTRA_JSON',
             ],
             'order' => ['UF_SORT' => 'ASC', 'ID' => 'ASC'],
         ]);
@@ -179,6 +179,8 @@ final class PropertyDescriptionService
                 'COLOR' => (string)($row['UF_COLOR'] ?? ''),
                 'TEXT_COLOR' => (string)($row['UF_TEXT_COLOR'] ?? ''),
                 'ICON' => (int)($row['UF_ICON'] ?? 0),
+                'IMAGE' => (int)($row['UF_IMAGE'] ?? 0),
+                'DOCUMENT' => (int)($row['UF_DOCUMENT'] ?? 0),
                 'EXTRA' => $extra,
             ];
         }

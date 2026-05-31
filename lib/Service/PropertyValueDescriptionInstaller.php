@@ -119,6 +119,8 @@ final class PropertyValueDescriptionInstaller
             'UF_COLOR' => $this->stringField('Цвет', 160),
             'UF_TEXT_COLOR' => $this->stringField('Цвет текста', 170),
             'UF_ICON' => $this->fileField('Иконка', 180),
+            'UF_IMAGE' => $this->fileField('Изображение', 185),
+            'UF_DOCUMENT' => $this->fileField('Документ', 186),
             'UF_SORT' => $this->integerField('Сортировка', 190),
             'UF_EXTRA_JSON' => $this->textareaField('Дополнительные параметры JSON', 200),
         ];

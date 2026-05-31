@@ -100,6 +100,7 @@ if ($productsIblockId > 0 && $offersIblockId <= 0) {
 }
 
 $catalogIblocks = prospektweb_uiseooptimt_get_iblocks($productsIblockId);
+$offersIblocks = prospektweb_uiseooptimt_get_iblocks($offersIblockId);
 $allValues = [];
 $productProperties = prospektweb_uiseooptimt_get_list_properties($productsIblockId, 'product', $allValues);
 $offerProperties = prospektweb_uiseooptimt_get_list_properties($offersIblockId, 'offer', $allValues);
@@ -116,6 +117,12 @@ $aTabs = [[
 ]];
 $tabControl = new CAdminTabControl('tabControl', $aTabs);
 ?>
+<style>
+    .pwu-description-create > summary { list-style: none; }
+    .pwu-description-create > summary::marker { content: ''; }
+    .pwu-description-create > summary::-webkit-details-marker { display: none; }
+    .pwu-description-create form { margin-top: 10px; }
+</style>
 <form method="post" action="<?php echo PROSPEKTWEB_UISEOOPTIMT_SELF; ?>">
     <?php
     $tabControl->Begin();
@@ -142,8 +149,15 @@ $tabControl = new CAdminTabControl('tabControl', $aTabs);
     <tr>
         <td>Связанный инфоблок торговых предложений:</td>
         <td>
-            <input type="number" min="0" name="OFFERS_IBLOCK_ID" value="<?php echo (int)$offersIblockId; ?>">
-            <div class="adm-info-message-wrap"><div class="adm-info-message">Если оставить 0, модуль попробует определить SKU-инфоблок автоматически после сохранения.</div></div>
+            <select name="OFFERS_IBLOCK_ID">
+                <option value="0">-- определить автоматически --</option>
+                <?php foreach ($offersIblocks as $iblock): ?>
+                    <option value="<?php echo (int)$iblock['id']; ?>" <?php echo $iblock['selected'] ? 'selected' : ''; ?>>
+                        [<?php echo (int)$iblock['id']; ?>] <?php echo htmlspecialcharsbx($iblock['name']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <div class="adm-info-message-wrap"><div class="adm-info-message">При выборе каталога модуль автоматически подставляет связанный SKU-инфоблок, но его можно изменить вручную аналогично инфоблоку товаров.</div></div>
         </td>
     </tr>
     <tr>
@@ -164,8 +178,8 @@ $tabControl = new CAdminTabControl('tabControl', $aTabs);
     <?php prospektweb_uiseooptimt_render_description_card($editId ?: $viewId, $repository, $viewId > 0); ?>
 <?php endif; ?>
 
-<?php prospektweb_uiseooptimt_render_properties_block('Свойства товара типа «Список»', $productProperties, $linkedMap, $availableDescriptions, $repository); ?>
-<?php prospektweb_uiseooptimt_render_properties_block('Свойства торговых предложений типа «Список»', $offerProperties, $linkedMap, $availableDescriptions, $repository); ?>
+<?php prospektweb_uiseooptimt_render_properties_block('Свойства товара типа «Список» с CALC_', $productProperties, $linkedMap, $availableDescriptions, $repository); ?>
+<?php prospektweb_uiseooptimt_render_properties_block('Свойства торговых предложений типа «Список» с CALC_', $offerProperties, $linkedMap, $availableDescriptions, $repository); ?>
 
 <?php
 /** @return array<int, array{id:int,name:string,selected:bool}> */
@@ -226,6 +240,12 @@ function prospektweb_uiseooptimt_get_list_properties(int $iblockId, string $enti
     ]);
 
     while ($property = $propertyRows->Fetch()) {
+        $propertyName = (string)$property['NAME'];
+        $propertyCode = (string)$property['CODE'];
+        if (stripos($propertyName, 'CALC_') === false && stripos($propertyCode, 'CALC_') === false) {
+            continue;
+        }
+
         $propertyId = (int)$property['ID'];
         $values = [];
         $enumRows = CIBlockPropertyEnum::GetList(['SORT' => 'ASC', 'VALUE' => 'ASC'], ['PROPERTY_ID' => $propertyId]);
@@ -233,7 +253,7 @@ function prospektweb_uiseooptimt_get_list_properties(int $iblockId, string $enti
             $value = [
                 'IBLOCK_ID' => $iblockId,
                 'PROPERTY_ID' => $propertyId,
-                'PROPERTY_CODE' => (string)$property['CODE'],
+                'PROPERTY_CODE' => $propertyCode,
                 'ID' => (int)$enum['ID'],
                 'XML_ID' => (string)$enum['XML_ID'],
                 'VALUE' => (string)$enum['VALUE'],
@@ -245,8 +265,8 @@ function prospektweb_uiseooptimt_get_list_properties(int $iblockId, string $enti
         $properties[] = [
             'IBLOCK_ID' => $iblockId,
             'ID' => $propertyId,
-            'CODE' => (string)$property['CODE'],
-            'NAME' => (string)$property['NAME'],
+            'CODE' => $propertyCode,
+            'NAME' => $propertyName,
             'ENTITY_TYPE' => $entityType,
             'VALUES' => $values,
         ];
@@ -271,7 +291,7 @@ function prospektweb_uiseooptimt_binding_from_request($request): array
 /** @return array<string, mixed> */
 function prospektweb_uiseooptimt_content_from_request($request): array
 {
-    return [
+    $content = [
         'UF_ACTIVE' => $request->getPost('UF_ACTIVE') === 'Y' ? 1 : 0,
         'UF_TITLE' => (string)$request->getPost('UF_TITLE'),
         'UF_SHORT_TEXT' => (string)$request->getPost('UF_SHORT_TEXT'),
@@ -281,10 +301,33 @@ function prospektweb_uiseooptimt_content_from_request($request): array
         'UF_LINK_TEXT' => (string)$request->getPost('UF_LINK_TEXT'),
         'UF_COLOR' => (string)$request->getPost('UF_COLOR'),
         'UF_TEXT_COLOR' => (string)$request->getPost('UF_TEXT_COLOR'),
-        'UF_ICON' => (int)$request->getPost('UF_ICON'),
         'UF_SORT' => (int)$request->getPost('UF_SORT'),
         'UF_EXTRA_JSON' => (string)$request->getPost('UF_EXTRA_JSON'),
     ];
+
+    foreach (['UF_ICON', 'UF_IMAGE', 'UF_DOCUMENT'] as $fieldName) {
+        $file = prospektweb_uiseooptimt_uploaded_file($fieldName . '_FILE');
+        if ($file !== null) {
+            $content[$fieldName] = $file;
+        }
+    }
+
+    return $content;
+}
+
+/** @return array<string, mixed>|null */
+function prospektweb_uiseooptimt_uploaded_file(string $inputName): ?array
+{
+    if (empty($_FILES[$inputName]) || !is_array($_FILES[$inputName])) {
+        return null;
+    }
+
+    $file = $_FILES[$inputName];
+    if ((int)($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || (string)($file['tmp_name'] ?? '') === '') {
+        return null;
+    }
+
+    return $file;
 }
 
 /** @param array<int, array<string, mixed>> $properties @param array<string, array<string, mixed>> $linkedMap @param array<int, array<string, mixed>> $availableDescriptions */
@@ -292,7 +335,7 @@ function prospektweb_uiseooptimt_render_properties_block(string $title, array $p
 {
     echo '<h2>' . htmlspecialcharsbx($title) . '</h2>';
     if (empty($properties)) {
-        echo '<p>Списочные свойства не найдены.</p>';
+        echo '<p>Списочные свойства с CALC_ в названии или коде не найдены.</p>';
         return;
     }
 
@@ -336,7 +379,7 @@ function prospektweb_uiseooptimt_render_actions(array $value, ?array $descriptio
         return;
     }
 
-    echo '<details><summary class="adm-btn">Создать описание</summary><form method="post" action="' . PROSPEKTWEB_UISEOOPTIMT_SELF . '">' . bitrix_sessid_post() . $hidden . '<input type="hidden" name="description_action" value="create">';
+    echo '<details class="pwu-description-create" style="display:inline-block"><summary style="list-style:none;cursor:pointer"><span class="adm-btn adm-btn-save">Создать описание</span></summary><form method="post" enctype="multipart/form-data" action="' . PROSPEKTWEB_UISEOOPTIMT_SELF . '">' . bitrix_sessid_post() . $hidden . '<input type="hidden" name="description_action" value="create">';
     prospektweb_uiseooptimt_render_content_fields([]);
     echo '<input type="submit" class="adm-btn-save" value="Создать описание"></form></details>';
 
@@ -373,7 +416,9 @@ function prospektweb_uiseooptimt_render_content_fields(array $row, bool $readonl
         'UF_LINK_TEXT' => 'Текст ссылки',
         'UF_COLOR' => 'Цвет',
         'UF_TEXT_COLOR' => 'Цвет текста',
-        'UF_ICON' => 'ID файла иконки',
+        'UF_ICON' => 'Файл иконки',
+        'UF_IMAGE' => 'Файл изображения',
+        'UF_DOCUMENT' => 'Файл документа',
         'UF_SORT' => 'Сортировка',
         'UF_EXTRA_JSON' => 'Дополнительные параметры JSON',
     ];
@@ -384,6 +429,12 @@ function prospektweb_uiseooptimt_render_content_fields(array $row, bool $readonl
         echo '<tr><td width="30%">' . htmlspecialcharsbx($label) . '</td><td>';
         if (in_array($name, ['UF_SHORT_TEXT', 'UF_DESCRIPTION', 'UF_HINT', 'UF_EXTRA_JSON'], true)) {
             echo '<textarea name="' . $name . '" rows="4" cols="80"' . $disabled . '>' . $value . '</textarea>';
+        } elseif (in_array($name, ['UF_ICON', 'UF_IMAGE', 'UF_DOCUMENT'], true)) {
+            if ((int)($row[$name] ?? 0) > 0) {
+                echo '<div>Текущий файл: #' . (int)$row[$name] . '</div>';
+            }
+            $accept = in_array($name, ['UF_ICON', 'UF_IMAGE'], true) ? ' accept="image/*"' : '';
+            echo '<input type="file" name="' . $name . '_FILE"' . $accept . $disabled . '>';
         } else {
             echo '<input type="text" name="' . $name . '" value="' . $value . '" size="80"' . $disabled . '>';
         }
@@ -403,7 +454,7 @@ function prospektweb_uiseooptimt_render_description_card(int $id, PropertyValueD
 
     echo '<h2>' . ($readonly ? 'Просмотр' : 'Редактирование') . ' описания #' . $id . '</h2>';
     echo '<div class="adm-info-message">Связано: инфоблок #' . (int)$row['UF_IBLOCK_ID'] . ', свойство ' . htmlspecialcharsbx((string)$row['UF_PROPERTY_CODE']) . ' (#' . (int)$row['UF_PROPERTY_ID'] . '), значение ' . htmlspecialcharsbx((string)$row['UF_VALUE_NAME']) . ' (#' . (int)$row['UF_VALUE_ID'] . ', XML_ID: ' . htmlspecialcharsbx((string)$row['UF_VALUE_XML_ID']) . '). Технические идентификаторы доступны только для просмотра; изменяются только контентные данные.</div>';
-    echo '<form method="post" action="' . PROSPEKTWEB_UISEOOPTIMT_SELF . '">' . bitrix_sessid_post() . '<input type="hidden" name="description_action" value="update"><input type="hidden" name="DESCRIPTION_ID" value="' . $id . '">';
+    echo '<form method="post" enctype="multipart/form-data" action="' . PROSPEKTWEB_UISEOOPTIMT_SELF . '">' . bitrix_sessid_post() . '<input type="hidden" name="description_action" value="update"><input type="hidden" name="DESCRIPTION_ID" value="' . $id . '">';
     prospektweb_uiseooptimt_render_content_fields($row, $readonly);
     if (!$readonly) {
         echo '<input type="submit" class="adm-btn-save" value="Сохранить описание">';
