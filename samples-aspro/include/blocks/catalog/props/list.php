@@ -31,6 +31,41 @@ $valueClassList = ['properties__value color_222 properties__item--inline js-prop
 $itemClassList = TSolution\Utils::implodeClasses($itemClassList);
 $titleClassList = TSolution\Utils::implodeClasses($titleClassList);
 $valueClassList = TSolution\Utils::implodeClasses($valueClassList);
+
+$pvmAttrs = [];
+$pvmEnumId = $arProp['PVM_ENUM_ID'] ?? $arProp['VALUE_ENUM_ID'] ?? null;
+$pvmValueXmlId = $arProp['PVM_VALUE_XML_ID'] ?? $arProp['VALUE_XML_ID'] ?? null;
+
+if (is_array($pvmEnumId)) {
+	$pvmEnumId = count($pvmEnumId) === 1 ? reset($pvmEnumId) : null;
+}
+if (is_array($pvmValueXmlId)) {
+	$pvmValueXmlId = count($pvmValueXmlId) === 1 ? reset($pvmValueXmlId) : null;
+}
+
+if ($pvmEnumId || $pvmValueXmlId) {
+	$pvmAttrs['data-pvm-property-description'] = 'product';
+}
+if ($pvmEnumId) {
+	$pvmAttrs['data-pvm-enum-id'] = $pvmEnumId;
+}
+if ($arProp['PVM_IBLOCK_ID'] ?? $arProp['IBLOCK_ID'] ?? null) {
+	$pvmAttrs['data-pvm-iblock-id'] = $arProp['PVM_IBLOCK_ID'] ?? $arProp['IBLOCK_ID'];
+}
+if ($arProp['PVM_PROPERTY_ID'] ?? $arProp['ID'] ?? null) {
+	$pvmAttrs['data-pvm-property-id'] = $arProp['PVM_PROPERTY_ID'] ?? $arProp['ID'];
+}
+if ($arProp['PVM_PROPERTY_CODE'] ?? $arProp['CODE'] ?? null) {
+	$pvmAttrs['data-pvm-property-code'] = $arProp['PVM_PROPERTY_CODE'] ?? $arProp['CODE'];
+}
+if ($pvmValueXmlId) {
+	$pvmAttrs['data-pvm-value-xml-id'] = $pvmValueXmlId;
+}
+
+$pvmAttrsHtml = '';
+foreach ($pvmAttrs as $pvmAttrName => $pvmAttrValue) {
+	$pvmAttrsHtml .= ' '.$pvmAttrName.'="'.htmlspecialcharsbx((string)$pvmAttrValue).'"';
+}
 ?>
 
 <div class="<?=$itemClassList;?>">
@@ -43,5 +78,5 @@ $valueClassList = TSolution\Utils::implodeClasses($valueClassList);
 		endif;
 ?></div>
 	<span class="properties__hr properties__item--inline">:</span>
-	<div class="<?=$valueClassList;?>"><?=$arProp['DISPLAY_VALUE'] ? implode(', ', (array)$arProp['DISPLAY_VALUE']) : '#PROP_VALUE#';?></div>
+	<div class="<?=$valueClassList;?>"<?=$pvmAttrsHtml;?>><?=$arProp['DISPLAY_VALUE'] ? implode(', ', (array)$arProp['DISPLAY_VALUE']) : '#PROP_VALUE#';?></div>
 </div>
