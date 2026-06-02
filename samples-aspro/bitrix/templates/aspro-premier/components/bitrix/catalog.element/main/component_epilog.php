@@ -101,8 +101,18 @@ TSolution\Functions::replaceListParams($arParams, ['PROPERTY_CODE' => 'PROPERTY_
 TSolution\Extensions::init($arExtensions);
 
 if (Loader::includeModule('prospektweb.propvalmanager')) {
-    Asset::getInstance()->addCss('/local/modules/prospektweb.propvalmanager/assets/css/property-description-tooltips.css');
-    Asset::getInstance()->addJs('/local/modules/prospektweb.propvalmanager/assets/js/property-description-tooltips.js');
+    $propValManagerModulePath = null;
+    foreach (['/local/modules/prospektweb.propvalmanager', '/bitrix/modules/prospektweb.propvalmanager'] as $modulePath) {
+        if (is_file($_SERVER['DOCUMENT_ROOT'].$modulePath.'/assets/js/property-description-tooltips.js')) {
+            $propValManagerModulePath = $modulePath;
+            break;
+        }
+    }
+
+    if ($propValManagerModulePath) {
+        Asset::getInstance()->addCss($propValManagerModulePath.'/assets/css/property-description-tooltips.css');
+        Asset::getInstance()->addJs($propValManagerModulePath.'/assets/js/property-description-tooltips.js');
+    }
 }
 ?>
 
