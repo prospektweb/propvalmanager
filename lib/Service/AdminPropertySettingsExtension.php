@@ -108,6 +108,10 @@ final class AdminPropertySettingsExtension
     function getInput(row, suffixes) {
         var inputs = row.querySelectorAll('input, textarea, select');
         for (var i = 0; i < inputs.length; i += 1) {
+            if (inputs[i].closest('tr') !== row) {
+                continue;
+            }
+
             var name = inputs[i].name || '';
             for (var j = 0; j < suffixes.length; j += 1) {
                 if (name.indexOf(suffixes[j]) !== -1 || name.match(new RegExp('\\[' + suffixes[j].replace(/[\[\]]/g, '') + '\\]$'))) {
