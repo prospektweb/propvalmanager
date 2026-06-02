@@ -110,19 +110,14 @@ final class PropertyValueDescriptionInstaller
             'UF_VALUE_ID' => $this->integerField('ID значения списка', 50),
             'UF_VALUE_XML_ID' => $this->stringField('XML_ID значения списка', 60),
             'UF_VALUE_NAME' => $this->stringField('Название значения списка', 70),
-            'UF_TITLE' => $this->stringField('Заголовок описания', 100),
-            'UF_SHORT_TEXT' => $this->textareaField('Краткое описание', 110),
-            'UF_DESCRIPTION' => $this->textareaField('Подробное описание', 120),
-            'UF_HINT' => $this->textareaField('Подсказка', 130),
-            'UF_LINK' => $this->stringField('Ссылка', 140),
-            'UF_LINK_TEXT' => $this->stringField('Текст ссылки', 150),
-            'UF_COLOR' => $this->stringField('Цвет', 160),
-            'UF_TEXT_COLOR' => $this->stringField('Цвет текста', 170),
-            'UF_ICON' => $this->fileField('Иконка', 180),
-            'UF_IMAGE' => $this->fileField('Изображение', 185),
-            'UF_DOCUMENT' => $this->fileField('Документ', 186),
-            'UF_SORT' => $this->integerField('Сортировка', 190),
-            'UF_EXTRA_JSON' => $this->textareaField('Дополнительные параметры JSON', 200),
+            'UF_TITLE' => $this->stringField('Заголовок', 100),
+            'UF_DESCRIPTION' => $this->textareaField('Описание', 110),
+            'UF_LINK' => $this->stringField('Ссылка', 120, false, true),
+            'UF_LINK_TEXT' => $this->stringField('Текст ссылки', 130, false, true),
+            'UF_LINK_TITLE' => $this->stringField('Title/alt ссылки', 140, false, true),
+            'UF_IMAGE' => $this->fileField('Картинка', 150),
+            'UF_IMAGE_TITLE' => $this->stringField('Title/alt картинки', 160),
+            'UF_SORT' => $this->integerField('Сортировка', 170),
         ];
     }
 
@@ -132,11 +127,12 @@ final class PropertyValueDescriptionInstaller
         $entityId = 'HLBLOCK_' . $hlBlockId;
         $existing = UserFieldTable::getList([
             'filter' => ['=ENTITY_ID' => $entityId, '=FIELD_NAME' => $fieldName],
-            'select' => ['ID'],
+            'select' => ['ID', 'MULTIPLE', 'SORT'],
             'limit' => 1,
         ])->fetch();
 
         if ($existing) {
+            $this->updateUserFieldIfNeeded((int)$existing['ID'], $existing, $field);
             return 'exists';
         }
 
@@ -153,10 +149,28 @@ final class PropertyValueDescriptionInstaller
         return 'created';
     }
 
-    /** @return array<string, mixed> */
-    private function stringField(string $label, int $sort, bool $mandatory = false): array
+    /** @param array<string, mixed> $existing @param array<string, mixed> $field */
+    private function updateUserFieldIfNeeded(int $fieldId, array $existing, array $field): void
     {
-        return $this->baseField('string', $label, $sort, $mandatory);
+        $updates = [];
+        foreach (['MULTIPLE', 'SORT'] as $option) {
+            if (isset($field[$option]) && (string)($existing[$option] ?? '') !== (string)$field[$option]) {
+                $updates[$option] = $field[$option];
+            }
+        }
+
+        if (empty($updates)) {
+            return;
+        }
+
+        $entity = new CUserTypeEntity();
+        $entity->Update($fieldId, $updates);
+    }
+
+    /** @return array<string, mixed> */
+    private function stringField(string $label, int $sort, bool $mandatory = false, bool $multiple = false): array
+    {
+        return $this->baseField('string', $label, $sort, $mandatory, $multiple);
     }
 
     /** @return array<string, mixed> */
@@ -188,13 +202,13 @@ final class PropertyValueDescriptionInstaller
     }
 
     /** @return array<string, mixed> */
-    private function baseField(string $type, string $label, int $sort, bool $mandatory = false): array
+    private function baseField(string $type, string $label, int $sort, bool $mandatory = false, bool $multiple = false): array
     {
         return [
             'USER_TYPE_ID' => $type,
             'XML_ID' => '',
             'SORT' => $sort,
-            'MULTIPLE' => 'N',
+            'MULTIPLE' => $multiple ? 'Y' : 'N',
             'MANDATORY' => $mandatory ? 'Y' : 'N',
             'SHOW_FILTER' => 'I',
             'SHOW_IN_LIST' => 'Y',
