@@ -109,6 +109,40 @@ final class PropertyDescriptionService
         return array_values($values);
     }
 
+    /** @param mixed $value @return mixed */
+    private static function firstValue($value)
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if ((string)$item !== '') {
+                    return $item;
+                }
+            }
+
+            return '';
+        }
+
+        return $value;
+    }
+
+
+    /** @param mixed $entity @param string[] $fields @return string[] */
+    private static function filterSelectFields($entity, array $fields): array
+    {
+        if (!method_exists($entity, 'hasField')) {
+            return $fields;
+        }
+
+        $result = [];
+        foreach ($fields as $field) {
+            if ($entity->hasField($field)) {
+                $result[] = $field;
+            }
+        }
+
+        return $result;
+    }
+
     /**
      * @param array<int, array{IBLOCK_ID:int,PROPERTY_ID:int,PROPERTY_CODE:string,VALUE_XML_ID:string}> $keys
      * @return array<string, array<string, array<string, mixed>>>
@@ -126,6 +160,10 @@ final class PropertyDescriptionService
 
         $entity = HighloadBlockTable::compileEntity($hlBlock);
         $dataClass = $entity->getDataClass();
+        $select = self::filterSelectFields($entity, [
+            'ID', 'UF_IBLOCK_ID', 'UF_PROPERTY_ID', 'UF_PROPERTY_CODE', 'UF_VALUE_XML_ID', 'UF_TITLE',
+            'UF_DESCRIPTION', 'UF_IMAGE', 'UF_LINK', 'UF_LINK_TEXT', 'UF_LINK_TARGET', 'UF_SORT',
+        ]);
 
         $iblockIds = [];
         $propertyIds = [];
@@ -145,11 +183,7 @@ final class PropertyDescriptionService
                 '@UF_PROPERTY_ID' => array_values($propertyIds),
                 '@UF_VALUE_XML_ID' => array_values($xmlIds),
             ],
-            'select' => [
-                'ID', 'UF_IBLOCK_ID', 'UF_PROPERTY_ID', 'UF_PROPERTY_CODE', 'UF_VALUE_XML_ID', 'UF_TITLE',
-                'UF_SHORT_TEXT', 'UF_DESCRIPTION', 'UF_HINT', 'UF_LINK', 'UF_LINK_TEXT', 'UF_COLOR',
-                'UF_TEXT_COLOR', 'UF_ICON', 'UF_IMAGE', 'UF_DOCUMENT', 'UF_SORT', 'UF_EXTRA_JSON',
-            ],
+            'select' => $select,
             'order' => ['UF_SORT' => 'ASC', 'ID' => 'ASC'],
         ]);
 
@@ -162,26 +196,17 @@ final class PropertyDescriptionService
 
             $propertyCode = (string)($row['UF_PROPERTY_CODE'] ?: $wanted[$compound]);
             $valueXmlId = (string)$row['UF_VALUE_XML_ID'];
-            $extra = [];
-            $extraRaw = (string)($row['UF_EXTRA_JSON'] ?? '');
-            if ($extraRaw !== '') {
-                $decoded = json_decode($extraRaw, true);
-                $extra = is_array($decoded) ? $decoded : [];
-            }
+            $link = (string)self::firstValue($row['UF_LINK'] ?? '');
+            $linkText = (string)self::firstValue($row['UF_LINK_TEXT'] ?? '');
+            $linkTarget = (string)self::firstValue($row['UF_LINK_TARGET'] ?? '');
 
             $result[$propertyCode][$valueXmlId] = [
                 'TITLE' => (string)($row['UF_TITLE'] ?? ''),
-                'SHORT_TEXT' => (string)($row['UF_SHORT_TEXT'] ?? ''),
                 'DESCRIPTION' => (string)($row['UF_DESCRIPTION'] ?? ''),
-                'HINT' => (string)($row['UF_HINT'] ?? ''),
-                'LINK' => (string)($row['UF_LINK'] ?? ''),
-                'LINK_TEXT' => (string)($row['UF_LINK_TEXT'] ?? ''),
-                'COLOR' => (string)($row['UF_COLOR'] ?? ''),
-                'TEXT_COLOR' => (string)($row['UF_TEXT_COLOR'] ?? ''),
-                'ICON' => (int)($row['UF_ICON'] ?? 0),
                 'IMAGE' => (int)($row['UF_IMAGE'] ?? 0),
-                'DOCUMENT' => (int)($row['UF_DOCUMENT'] ?? 0),
-                'EXTRA' => $extra,
+                'LINK' => $link,
+                'LINK_TEXT' => $linkText !== '' ? $linkText : $link,
+                'LINK_TARGET' => $linkTarget === '_blank' ? '_blank' : '_self',
             ];
         }
 

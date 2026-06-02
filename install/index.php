@@ -7,8 +7,10 @@ use Bitrix\Main\Localization\Loc;
 use Prospektweb\PropValManager\Service\AsproTemplatePatcher;
 use Prospektweb\PropValManager\Service\ModuleConfig;
 use Prospektweb\PropValManager\Service\PropertyManager;
+use Prospektweb\PropValManager\Service\PropertyDescriptionJsonExporter;
 use Prospektweb\PropValManager\Service\PropertyValueDescriptionInstaller;
 use Prospektweb\PropValManager\Service\AdminPropertySettingsExtension;
+use Prospektweb\PropValManager\Service\PublicJsonConfigExtension;
 
 Loc::loadMessages(__FILE__);
 
@@ -16,7 +18,9 @@ require_once dirname(__DIR__) . '/lib/Service/ModuleConfig.php';
 require_once dirname(__DIR__) . '/lib/Service/PropertyManager.php';
 require_once dirname(__DIR__) . '/lib/Service/AsproTemplatePatcher.php';
 require_once dirname(__DIR__) . '/lib/Service/PropertyValueDescriptionInstaller.php';
+require_once dirname(__DIR__) . '/lib/Service/PropertyDescriptionJsonExporter.php';
 require_once dirname(__DIR__) . '/lib/Service/AdminPropertySettingsExtension.php';
+require_once dirname(__DIR__) . '/lib/Service/PublicJsonConfigExtension.php';
 
 class prospektweb_propvalmanager extends CModule
 {
@@ -68,6 +72,7 @@ class prospektweb_propvalmanager extends CModule
 
             (new PropertyManager())->ensureTrCaseProperty($productsIblockId);
             (new PropertyValueDescriptionInstaller())->ensure();
+            (new PropertyDescriptionJsonExporter())->export();
             $this->InstallFiles();
             $this->registerEvents();
 
@@ -111,6 +116,7 @@ class prospektweb_propvalmanager extends CModule
         ModuleConfig::setOffersIblockId($offersIblockId);
         (new PropertyManager())->ensureTrCaseProperty($productsIblockId);
         (new PropertyValueDescriptionInstaller())->ensure();
+        (new PropertyDescriptionJsonExporter())->export();
 
         return true;
     }
@@ -287,6 +293,13 @@ class prospektweb_propvalmanager extends CModule
             AdminPropertySettingsExtension::EVENT_NAME,
             $this->MODULE_ID,
             AdminPropertySettingsExtension::class,
+            'onEndBufferContent'
+        );
+        UnRegisterModuleDependences(
+            PublicJsonConfigExtension::EVENT_MODULE,
+            PublicJsonConfigExtension::EVENT_NAME,
+            $this->MODULE_ID,
+            PublicJsonConfigExtension::class,
             'onEndBufferContent'
         );
     }
