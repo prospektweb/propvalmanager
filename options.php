@@ -313,6 +313,7 @@ function prospektweb_propvalmanager_binding_from_request($request): array
 /** @return array<string, mixed> */
 function prospektweb_propvalmanager_content_from_request($request): array
 {
+    $links = prospektweb_propvalmanager_links_from_request($request);
     $content = [
         'UF_ACTIVE' => $request->getPost('UF_ACTIVE') === 'Y' ? 1 : 0,
         'UF_TITLE' => (string)$request->getPost('UF_TITLE'),
