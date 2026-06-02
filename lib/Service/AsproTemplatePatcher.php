@@ -21,6 +21,7 @@ final class AsproTemplatePatcher
         ],
         [
             'target_candidates' => [
+                '/include/blocks/catalog/props/list.php',
                 '/local/templates/aspro-premier/include/blocks/catalog/props/list.php',
                 '/bitrix/templates/aspro-premier/include/blocks/catalog/props/list.php',
             ],
