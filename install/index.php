@@ -284,6 +284,13 @@ class prospektweb_propvalmanager extends CModule
             AdminPropertySettingsExtension::class,
             'onEndBufferContent'
         );
+        RegisterModuleDependences(
+            PublicJsonConfigExtension::EVENT_MODULE,
+            PublicJsonConfigExtension::EVENT_NAME,
+            $this->MODULE_ID,
+            PublicJsonConfigExtension::class,
+            'onEndBufferContent'
+        );
     }
 
     private function unRegisterEvents(): void
