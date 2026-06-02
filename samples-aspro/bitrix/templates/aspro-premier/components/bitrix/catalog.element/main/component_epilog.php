@@ -3,7 +3,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     exit;
 }
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
 
 Loc::loadMessages(__FILE__);
 global $arTheme, $APPLICATION;
@@ -97,6 +99,21 @@ if (!Bitrix\Main\Loader::includeModule('blog') || !$templateData['SHOW_REVIEW'])
 
 TSolution\Functions::replaceListParams($arParams, ['PROPERTY_CODE' => 'PROPERTY_CODE']);
 TSolution\Extensions::init($arExtensions);
+
+if (Loader::includeModule('prospektweb.propvalmanager')) {
+    $propValManagerModulePath = null;
+    foreach (['/local/modules/prospektweb.propvalmanager', '/bitrix/modules/prospektweb.propvalmanager'] as $modulePath) {
+        if (is_file($_SERVER['DOCUMENT_ROOT'].$modulePath.'/assets/js/property-description-tooltips.js')) {
+            $propValManagerModulePath = $modulePath;
+            break;
+        }
+    }
+
+    if ($propValManagerModulePath) {
+        Asset::getInstance()->addCss($propValManagerModulePath.'/assets/css/property-description-tooltips.css');
+        Asset::getInstance()->addJs($propValManagerModulePath.'/assets/js/property-description-tooltips.js');
+    }
+}
 ?>
 
 <?php
