@@ -299,21 +299,19 @@ function prospektweb_propvalmanager_binding_from_request($request): array
 /** @return array<string, mixed> */
 function prospektweb_propvalmanager_content_from_request($request): array
 {
+    $links = prospektweb_propvalmanager_links_from_request($request);
     $content = [
         'UF_ACTIVE' => $request->getPost('UF_ACTIVE') === 'Y' ? 1 : 0,
         'UF_TITLE' => (string)$request->getPost('UF_TITLE'),
-        'UF_SHORT_TEXT' => (string)$request->getPost('UF_SHORT_TEXT'),
         'UF_DESCRIPTION' => (string)$request->getPost('UF_DESCRIPTION'),
-        'UF_HINT' => (string)$request->getPost('UF_HINT'),
-        'UF_LINK' => (string)$request->getPost('UF_LINK'),
-        'UF_LINK_TEXT' => (string)$request->getPost('UF_LINK_TEXT'),
-        'UF_COLOR' => (string)$request->getPost('UF_COLOR'),
-        'UF_TEXT_COLOR' => (string)$request->getPost('UF_TEXT_COLOR'),
+        'UF_LINK' => array_column($links, 'URL'),
+        'UF_LINK_TEXT' => array_column($links, 'TEXT'),
+        'UF_LINK_TITLE' => array_column($links, 'TITLE'),
+        'UF_IMAGE_TITLE' => (string)$request->getPost('UF_IMAGE_TITLE'),
         'UF_SORT' => (int)$request->getPost('UF_SORT'),
-        'UF_EXTRA_JSON' => (string)$request->getPost('UF_EXTRA_JSON'),
     ];
 
-    foreach (['UF_ICON', 'UF_IMAGE', 'UF_DOCUMENT'] as $fieldName) {
+    foreach (['UF_IMAGE'] as $fieldName) {
         $file = prospektweb_propvalmanager_uploaded_file($fieldName . '_FILE');
         if ($file !== null) {
             $content[$fieldName] = $file;
@@ -321,6 +319,51 @@ function prospektweb_propvalmanager_content_from_request($request): array
     }
 
     return $content;
+}
+
+
+/**
+ * @return array<int, array{URL:string,TEXT:string,TITLE:string}>
+ */
+function prospektweb_propvalmanager_links_from_request($request): array
+{
+    $urls = prospektweb_propvalmanager_normalize_post_array($request->getPost('UF_LINK'));
+    $texts = prospektweb_propvalmanager_normalize_post_array($request->getPost('UF_LINK_TEXT'));
+    $titles = prospektweb_propvalmanager_normalize_post_array($request->getPost('UF_LINK_TITLE'));
+    $max = max(count($urls), count($texts), count($titles));
+    $links = [];
+
+    for ($index = 0; $index < $max; $index++) {
+        $url = trim($urls[$index] ?? '');
+        $text = trim($texts[$index] ?? '');
+        $title = trim($titles[$index] ?? '');
+        if ($url === '' && $text === '' && $title === '') {
+            continue;
+        }
+
+        $links[] = [
+            'URL' => $url,
+            'TEXT' => $text,
+            'TITLE' => $title,
+        ];
+    }
+
+    return $links;
+}
+
+/** @param mixed $value @return string[] */
+function prospektweb_propvalmanager_normalize_post_array($value): array
+{
+    if (!is_array($value)) {
+        $value = [$value];
+    }
+
+    $result = [];
+    foreach ($value as $item) {
+        $result[] = (string)$item;
+    }
+
+    return $result;
 }
 
 /** @return array<string, mixed>|null */
@@ -537,40 +580,134 @@ function prospektweb_propvalmanager_hidden_binding(array $value): string
 function prospektweb_propvalmanager_render_content_fields(array $row, bool $readonly = false): void
 {
     $disabled = $readonly ? ' disabled' : '';
-    $fields = [
-        'UF_TITLE' => 'Заголовок',
-        'UF_SHORT_TEXT' => 'Краткое описание',
-        'UF_DESCRIPTION' => 'Подробное описание',
-        'UF_HINT' => 'Подсказка',
-        'UF_LINK' => 'Ссылка',
-        'UF_LINK_TEXT' => 'Текст ссылки',
-        'UF_COLOR' => 'Цвет',
-        'UF_TEXT_COLOR' => 'Цвет текста',
-        'UF_ICON' => 'Файл иконки',
-        'UF_IMAGE' => 'Файл изображения',
-        'UF_DOCUMENT' => 'Файл документа',
-        'UF_SORT' => 'Сортировка',
-        'UF_EXTRA_JSON' => 'Дополнительные параметры JSON',
-    ];
+    $title = htmlspecialcharsbx((string)($row['UF_TITLE'] ?? ''));
+    $description = htmlspecialcharsbx((string)($row['UF_DESCRIPTION'] ?? ''));
+    $sort = htmlspecialcharsbx((string)($row['UF_SORT'] ?? ''));
+    $imageTitle = htmlspecialcharsbx((string)($row['UF_IMAGE_TITLE'] ?? ''));
+    $links = prospektweb_propvalmanager_normalize_links_row($row);
+
     echo '<table class="adm-detail-content-table edit-table">';
-    echo '<tr><td>Активность</td><td><input type="checkbox" name="UF_ACTIVE" value="Y" ' . (((int)($row['UF_ACTIVE'] ?? 1) === 1) ? 'checked' : '') . $disabled . '></td></tr>';
-    foreach ($fields as $name => $label) {
-        $value = htmlspecialcharsbx((string)($row[$name] ?? ''));
-        echo '<tr><td width="30%">' . htmlspecialcharsbx($label) . '</td><td>';
-        if (in_array($name, ['UF_SHORT_TEXT', 'UF_DESCRIPTION', 'UF_HINT', 'UF_EXTRA_JSON'], true)) {
-            echo '<textarea name="' . $name . '" rows="4" cols="80"' . $disabled . '>' . $value . '</textarea>';
-        } elseif (in_array($name, ['UF_ICON', 'UF_IMAGE', 'UF_DOCUMENT'], true)) {
-            if ((int)($row[$name] ?? 0) > 0) {
-                echo '<div>Текущий файл: #' . (int)$row[$name] . '</div>';
-            }
-            $accept = in_array($name, ['UF_ICON', 'UF_IMAGE'], true) ? ' accept="image/*"' : '';
-            echo '<input type="file" name="' . $name . '_FILE"' . $accept . $disabled . '>';
-        } else {
-            echo '<input type="text" name="' . $name . '" value="' . $value . '" size="80"' . $disabled . '>';
-        }
-        echo '</td></tr>';
+    echo '<tr><td width="30%">Активность</td><td><input type="checkbox" name="UF_ACTIVE" value="Y" ' . (((int)($row['UF_ACTIVE'] ?? 1) === 1) ? 'checked' : '') . $disabled . '></td></tr>';
+    echo '<tr><td>Сортировка</td><td><input type="text" name="UF_SORT" value="' . $sort . '" size="20"' . $disabled . '></td></tr>';
+    echo '<tr><td>Заголовок</td><td><input type="text" name="UF_TITLE" value="' . $title . '" size="80"' . $disabled . '></td></tr>';
+    echo '<tr><td>Описание</td><td><textarea name="UF_DESCRIPTION" rows="5" cols="80"' . $disabled . '>' . $description . '</textarea></td></tr>';
+    echo '<tr><td>Ссылки</td><td>';
+    prospektweb_propvalmanager_render_links_fields($links, $readonly);
+    echo '</td></tr>';
+    echo '<tr><td>Картинка</td><td>';
+    if ((int)($row['UF_IMAGE'] ?? 0) > 0) {
+        echo '<div>Текущий файл: #' . (int)$row['UF_IMAGE'] . '</div>';
     }
+    echo '<input type="file" name="UF_IMAGE_FILE" accept="image/*"' . $disabled . '>';
+    echo '</td></tr>';
+    echo '<tr><td>Title/alt картинки</td><td><input type="text" name="UF_IMAGE_TITLE" value="' . $imageTitle . '" size="80"' . $disabled . '></td></tr>';
     echo '</table>';
+}
+
+/**
+ * @param array<int, array{URL:string,TEXT:string,TITLE:string}> $links
+ */
+function prospektweb_propvalmanager_render_links_fields(array $links, bool $readonly = false): void
+{
+    $disabled = $readonly ? ' disabled' : '';
+    if (empty($links)) {
+        $links[] = ['URL' => '', 'TEXT' => '', 'TITLE' => ''];
+    }
+
+    echo '<div class="pwu-links-list" data-pwu-links-list="Y">';
+    foreach ($links as $link) {
+        echo '<div class="pwu-link-row" style="margin-bottom:8px">';
+        echo '<input type="text" name="UF_LINK[]" value="' . htmlspecialcharsbx($link['URL']) . '" placeholder="Ссылка" size="28"' . $disabled . '> ';
+        echo '<input type="text" name="UF_LINK_TEXT[]" value="' . htmlspecialcharsbx($link['TEXT']) . '" placeholder="Текст ссылки" size="24"' . $disabled . '> ';
+        echo '<input type="text" name="UF_LINK_TITLE[]" value="' . htmlspecialcharsbx($link['TITLE']) . '" placeholder="Title/alt ссылки" size="24"' . $disabled . '> ';
+        if (!$readonly) {
+            echo '<button type="button" class="adm-btn pwu-link-remove">Удалить</button>';
+        }
+        echo '</div>';
+    }
+    echo '</div>';
+    if (!$readonly) {
+        echo '<button type="button" class="adm-btn pwu-link-add">Добавить ссылку</button>';
+        prospektweb_propvalmanager_render_links_script();
+    }
+}
+
+function prospektweb_propvalmanager_render_links_script(): void
+{
+    static $rendered = false;
+    if ($rendered) {
+        return;
+    }
+    $rendered = true;
+
+    echo <<<'HTML'
+<script>
+(function () {
+    document.addEventListener('click', function (event) {
+        var target = event.target;
+        if (!target || !target.classList) {
+            return;
+        }
+
+        if (target.classList.contains('pwu-link-remove')) {
+            var row = target.closest('.pwu-link-row');
+            if (row) {
+                row.parentNode.removeChild(row);
+            }
+            return;
+        }
+
+        if (!target.classList.contains('pwu-link-add')) {
+            return;
+        }
+
+        var list = target.previousElementSibling;
+        if (!list || list.getAttribute('data-pwu-links-list') !== 'Y') {
+            return;
+        }
+
+        var row = document.createElement('div');
+        row.className = 'pwu-link-row';
+        row.style.marginBottom = '8px';
+        row.innerHTML = '<input type="text" name="UF_LINK[]" placeholder="Ссылка" size="28"> '
+            + '<input type="text" name="UF_LINK_TEXT[]" placeholder="Текст ссылки" size="24"> '
+            + '<input type="text" name="UF_LINK_TITLE[]" placeholder="Title/alt ссылки" size="24"> '
+            + '<button type="button" class="adm-btn pwu-link-remove">Удалить</button>';
+        list.appendChild(row);
+    });
+}());
+</script>
+HTML;
+}
+
+/**
+ * @param array<string, mixed> $row
+ * @return array<int, array{URL:string,TEXT:string,TITLE:string}>
+ */
+function prospektweb_propvalmanager_normalize_links_row(array $row): array
+{
+    $urls = prospektweb_propvalmanager_normalize_post_array($row['UF_LINK'] ?? '');
+    $texts = prospektweb_propvalmanager_normalize_post_array($row['UF_LINK_TEXT'] ?? '');
+    $titles = prospektweb_propvalmanager_normalize_post_array($row['UF_LINK_TITLE'] ?? '');
+    $max = max(count($urls), count($texts), count($titles));
+    $links = [];
+
+    for ($index = 0; $index < $max; $index++) {
+        $url = (string)($urls[$index] ?? '');
+        $text = (string)($texts[$index] ?? '');
+        $title = (string)($titles[$index] ?? '');
+        if ($url === '' && $text === '' && $title === '') {
+            continue;
+        }
+
+        $links[] = [
+            'URL' => $url,
+            'TEXT' => $text,
+            'TITLE' => $title,
+        ];
+    }
+
+    return $links;
 }
 
 function prospektweb_propvalmanager_render_description_card(int $id, PropertyValueDescriptionRepository $repository, bool $readonly): void
