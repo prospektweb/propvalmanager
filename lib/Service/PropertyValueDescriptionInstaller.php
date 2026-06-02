@@ -112,12 +112,11 @@ final class PropertyValueDescriptionInstaller
             'UF_VALUE_NAME' => $this->stringField('Название значения списка', 70),
             'UF_TITLE' => $this->stringField('Заголовок', 100),
             'UF_DESCRIPTION' => $this->textareaField('Описание', 110),
-            'UF_LINK' => $this->stringField('Ссылка', 120, false, true),
-            'UF_LINK_TEXT' => $this->stringField('Текст ссылки', 130, false, true),
-            'UF_LINK_TITLE' => $this->stringField('Title/alt ссылки', 140, false, true),
-            'UF_IMAGE' => $this->fileField('Картинка', 150),
-            'UF_IMAGE_TITLE' => $this->stringField('Title/alt картинки', 160),
-            'UF_SORT' => $this->integerField('Сортировка', 170),
+            'UF_IMAGE' => $this->fileField('Картинка', 120),
+            'UF_LINK' => $this->stringField('Ссылка', 130),
+            'UF_LINK_TEXT' => $this->stringField('Текст ссылки', 140),
+            'UF_LINK_TARGET' => $this->stringField('Режим ссылки', 150),
+            'UF_SORT' => $this->integerField('Сортировка', 160),
         ];
     }
 

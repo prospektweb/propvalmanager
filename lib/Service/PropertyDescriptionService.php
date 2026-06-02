@@ -109,6 +109,40 @@ final class PropertyDescriptionService
         return array_values($values);
     }
 
+    /** @param mixed $value @return mixed */
+    private static function firstValue($value)
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if ((string)$item !== '') {
+                    return $item;
+                }
+            }
+
+            return '';
+        }
+
+        return $value;
+    }
+
+
+    /** @param mixed $entity @param string[] $fields @return string[] */
+    private static function filterSelectFields($entity, array $fields): array
+    {
+        if (!method_exists($entity, 'hasField')) {
+            return $fields;
+        }
+
+        $result = [];
+        foreach ($fields as $field) {
+            if ($entity->hasField($field)) {
+                $result[] = $field;
+            }
+        }
+
+        return $result;
+    }
+
     /**
      * @param mixed $urls
      * @param mixed $texts
@@ -193,7 +227,7 @@ final class PropertyDescriptionService
         $dataClass = $entity->getDataClass();
         $select = self::filterSelectFields($entity, [
             'ID', 'UF_IBLOCK_ID', 'UF_PROPERTY_ID', 'UF_PROPERTY_CODE', 'UF_VALUE_XML_ID', 'UF_TITLE',
-            'UF_DESCRIPTION', 'UF_LINK', 'UF_LINK_TEXT', 'UF_LINK_TITLE', 'UF_IMAGE', 'UF_IMAGE_TITLE', 'UF_SORT',
+            'UF_DESCRIPTION', 'UF_IMAGE', 'UF_LINK', 'UF_LINK_TEXT', 'UF_LINK_TARGET', 'UF_SORT',
         ]);
 
         $iblockIds = [];
@@ -227,18 +261,17 @@ final class PropertyDescriptionService
 
             $propertyCode = (string)($row['UF_PROPERTY_CODE'] ?: $wanted[$compound]);
             $valueXmlId = (string)$row['UF_VALUE_XML_ID'];
-            $links = self::normalizeLinks($row['UF_LINK'] ?? [], $row['UF_LINK_TEXT'] ?? [], $row['UF_LINK_TITLE'] ?? []);
-            $firstLink = $links[0] ?? ['URL' => '', 'TEXT' => '', 'TITLE' => ''];
+            $link = (string)self::firstValue($row['UF_LINK'] ?? '');
+            $linkText = (string)self::firstValue($row['UF_LINK_TEXT'] ?? '');
+            $linkTarget = (string)self::firstValue($row['UF_LINK_TARGET'] ?? '');
 
             $result[$propertyCode][$valueXmlId] = [
                 'TITLE' => (string)($row['UF_TITLE'] ?? ''),
                 'DESCRIPTION' => (string)($row['UF_DESCRIPTION'] ?? ''),
-                'LINKS' => $links,
-                'LINK' => $firstLink['URL'],
-                'LINK_TEXT' => $firstLink['TEXT'],
-                'LINK_TITLE' => $firstLink['TITLE'],
                 'IMAGE' => (int)($row['UF_IMAGE'] ?? 0),
-                'IMAGE_TITLE' => (string)($row['UF_IMAGE_TITLE'] ?? ''),
+                'LINK' => $link,
+                'LINK_TEXT' => $linkText !== '' ? $linkText : $link,
+                'LINK_TARGET' => $linkTarget === '_blank' ? '_blank' : '_self',
             ];
         }
 
