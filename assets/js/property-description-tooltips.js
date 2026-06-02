@@ -14,7 +14,6 @@
     var activeMode = null;
     var hideTimer = null;
     var tooltip = null;
-    var closeButton = null;
     var tooltipHovered = false;
     var eventsBound = false;
 
@@ -250,26 +249,10 @@
     function renderTooltip(item, mode) {
         var root = createTooltip();
         removeChildren(root);
-        closeButton = null;
-
         root.className = ROOT_CLASS + ' ' + ROOT_CLASS + '--' + mode;
         root.setAttribute('aria-hidden', 'false');
-        root.setAttribute('role', mode === 'click' ? 'dialog' : 'tooltip');
-
-        if (mode === 'click') {
-            root.setAttribute('aria-modal', 'false');
-            closeButton = document.createElement('button');
-            closeButton.type = 'button';
-            closeButton.className = ROOT_CLASS + '__close';
-            closeButton.setAttribute('aria-label', 'Закрыть описание свойства');
-            closeButton.textContent = '×';
-            closeButton.addEventListener('click', function () {
-                hideTooltip(true);
-            });
-            root.appendChild(closeButton);
-        } else {
-            root.removeAttribute('aria-modal');
-        }
+        root.setAttribute('role', 'tooltip');
+        root.removeAttribute('aria-modal');
 
         if (item.image && isSafeUrl(item.image, false)) {
             var image = document.createElement('img');
@@ -312,15 +295,16 @@
             return;
         }
 
-        var margin = 10;
+        var margin = 4;
+        var viewportPadding = 8;
         var rect = trigger.getBoundingClientRect();
         var tooltipRect = tooltip.getBoundingClientRect();
-        var left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+        var left = rect.left;
         var top = rect.bottom + margin;
 
-        left = Math.max(margin, Math.min(left, window.innerWidth - tooltipRect.width - margin));
+        left = Math.max(viewportPadding, Math.min(left, window.innerWidth - tooltipRect.width - viewportPadding));
 
-        if (top + tooltipRect.height + margin > window.innerHeight && rect.top - tooltipRect.height - margin > margin) {
+        if (top + tooltipRect.height + viewportPadding > window.innerHeight && rect.top - tooltipRect.height - margin > viewportPadding) {
             top = rect.top - tooltipRect.height - margin;
             tooltip.classList.add(ROOT_CLASS + '--above');
         } else {
@@ -343,12 +327,6 @@
         renderTooltip(item, mode);
         positionTooltip(trigger);
         createTooltip().classList.add('is-open');
-
-        if (mode === 'click' && closeButton) {
-            window.setTimeout(function () {
-                closeButton.focus({preventScroll: true});
-            }, 0);
-        }
     }
 
     function hideTooltip(restoreFocus) {

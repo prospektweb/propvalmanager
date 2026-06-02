@@ -1,91 +1,47 @@
+/* Styles are aligned with the standard Aspro Premier .hint .tooltip look. */
 .pvm-description-tooltip {
     position: fixed;
     z-index: 1200;
     display: none;
     box-sizing: border-box;
     width: max-content;
-    max-width: min(360px, calc(100vw - 20px));
-    padding: 16px;
-    border: 1px solid rgba(34, 34, 34, 0.12);
-    border-radius: 12px;
+    min-width: 200px;
+    max-width: min(300px, calc(100vw - 20px));
+    padding: 13px 16px;
+    border: 0;
+    border-radius: 8px;
+    border-radius: var(--theme-button-border-radius);
     background: #fff;
-    box-shadow: 0 12px 36px rgba(34, 34, 34, 0.16);
-    color: #222;
-    font-size: 14px;
-    line-height: 1.45;
+    background: var(--card_bg_hover_black);
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.12);
+    color: #777;
+    color: var(--basic_text_black);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 14px;
+    text-align: left;
 }
 
 .pvm-description-tooltip.is-open {
     display: block;
 }
 
-.pvm-description-tooltip::before {
-    content: '';
-    position: absolute;
-    top: -7px;
-    left: 50%;
-    width: 12px;
-    height: 12px;
-    margin-left: -6px;
-    border-top: 1px solid rgba(34, 34, 34, 0.12);
-    border-left: 1px solid rgba(34, 34, 34, 0.12);
-    background: #fff;
-    transform: rotate(45deg);
-}
-
-.pvm-description-tooltip--above::before {
-    top: auto;
-    bottom: -7px;
-    border-top: 0;
-    border-left: 0;
-    border-right: 1px solid rgba(34, 34, 34, 0.12);
-    border-bottom: 1px solid rgba(34, 34, 34, 0.12);
-}
-
-.pvm-description-tooltip--click {
-    padding-top: 40px;
-}
-
-.pvm-description-tooltip__close {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: #666;
-    font-size: 24px;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.pvm-description-tooltip__close:hover,
-.pvm-description-tooltip__close:focus-visible {
-    background: rgba(34, 34, 34, 0.06);
-    color: #222;
-    outline: none;
-}
-
 .pvm-description-tooltip__image {
     display: block;
     width: 100%;
-    max-height: 180px;
+    max-height: 160px;
     margin-bottom: 12px;
-    border-radius: 8px;
+    border-radius: 4px;
     object-fit: cover;
 }
 
 .pvm-description-tooltip__title {
     margin-bottom: 6px;
+    color: #222;
+    color: var(--white_text_black);
     font-weight: 600;
-    font-size: 15px;
-    line-height: 1.35;
+    font-size: 13px;
+    line-height: 16px;
 }
 
 .pvm-description-tooltip__description {
@@ -100,10 +56,6 @@
 @media (max-width: 600px) {
     .pvm-description-tooltip {
         max-width: calc(100vw - 16px);
-        padding: 14px;
-    }
-
-    .pvm-description-tooltip--click {
-        padding-top: 38px;
+        padding: 13px 16px;
     }
 }
