@@ -319,9 +319,9 @@ function prospektweb_propvalmanager_content_from_request($request): array
         'UF_TITLE' => (string)$request->getPost('UF_TITLE'),
         'UF_DESCRIPTION' => (string)$request->getPost('UF_DESCRIPTION'),
         'UF_IMAGE' => (int)$request->getPost('UF_IMAGE'),
-        'UF_LINK' => trim((string)$request->getPost('UF_LINK')),
-        'UF_LINK_TEXT' => trim((string)$request->getPost('UF_LINK_TEXT')),
-        'UF_LINK_TARGET' => prospektweb_propvalmanager_normalize_link_target((string)$request->getPost('UF_LINK_TARGET')),
+        'UF_LINK' => trim((string)prospektweb_propvalmanager_first_post_value($request->getPost('UF_LINK'))),
+        'UF_LINK_TEXT' => trim((string)prospektweb_propvalmanager_first_post_value($request->getPost('UF_LINK_TEXT'))),
+        'UF_LINK_TARGET' => prospektweb_propvalmanager_normalize_link_target((string)prospektweb_propvalmanager_first_post_value($request->getPost('UF_LINK_TARGET'))),
         'UF_SORT' => (int)$request->getPost('UF_SORT'),
     ];
 
@@ -336,6 +336,45 @@ function prospektweb_propvalmanager_content_from_request($request): array
 function prospektweb_propvalmanager_normalize_link_target(string $target): string
 {
     return $target === '_blank' ? '_blank' : '_self';
+}
+
+
+/**
+ * Kept for backward compatibility with deployed admin pages from the previous multiple-link form.
+ * New code stores a single link directly in prospektweb_propvalmanager_content_from_request().
+ *
+ * @return array<int, array{URL:string,TEXT:string,TITLE:string}>
+ */
+function prospektweb_propvalmanager_links_from_request($request): array
+{
+    $url = trim((string)prospektweb_propvalmanager_first_post_value($request->getPost('UF_LINK')));
+    $text = trim((string)prospektweb_propvalmanager_first_post_value($request->getPost('UF_LINK_TEXT')));
+
+    if ($url === '' && $text === '') {
+        return [];
+    }
+
+    return [[
+        'URL' => $url,
+        'TEXT' => $text,
+        'TITLE' => '',
+    ]];
+}
+
+/** @param mixed $value @return mixed */
+function prospektweb_propvalmanager_first_post_value($value)
+{
+    if (is_array($value)) {
+        foreach ($value as $item) {
+            if ((string)$item !== '') {
+                return $item;
+            }
+        }
+
+        return '';
+    }
+
+    return $value;
 }
 
 /** @return array<string, mixed>|null */
