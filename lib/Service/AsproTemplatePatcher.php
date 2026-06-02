@@ -9,15 +9,21 @@ final class AsproTemplatePatcher
     private const TRACKED_FILES_OPTION = 'ASPRO_PATCHED_FILES';
 
     /**
-     * @var array<int, array{target:string,source:string}>
+     * @var array<int, array{target_candidates:array<int, string>,source:string}>
      */
     private const REPLACEMENTS = [
         [
-            'target' => '/bitrix/templates/aspro-premier/components/bitrix/catalog.element/main/component_epilog.php',
+            'target_candidates' => [
+                '/local/templates/aspro-premier/components/bitrix/catalog.element/main/component_epilog.php',
+                '/bitrix/templates/aspro-premier/components/bitrix/catalog.element/main/component_epilog.php',
+            ],
             'source' => '/samples-aspro/bitrix/templates/aspro-premier/components/bitrix/catalog.element/main/component_epilog.php',
         ],
         [
-            'target' => '/bitrix/templates/aspro-premier/include/blocks/catalog/props/list.php',
+            'target_candidates' => [
+                '/local/templates/aspro-premier/include/blocks/catalog/props/list.php',
+                '/bitrix/templates/aspro-premier/include/blocks/catalog/props/list.php',
+            ],
             'source' => '/samples-aspro/include/blocks/catalog/props/list.php',
         ],
     ];
@@ -27,15 +33,15 @@ final class AsproTemplatePatcher
         $tracked = $this->getTrackedFiles();
 
         foreach (self::REPLACEMENTS as $replacement) {
-            $targetPath = $this->getDocumentRootPath($replacement['target']);
+            $targetPath = $this->resolveTargetPath($replacement['target_candidates']);
             $sourcePath = $this->getModuleRootPath($replacement['source']);
 
             if (!is_file($sourcePath) || !is_readable($sourcePath)) {
                 throw new Exception('Подготовленный файл Aspro недоступен: ' . $sourcePath);
             }
 
-            if (!is_file($targetPath)) {
-                $this->log('Файл Aspro не найден, замена пропущена: ' . $targetPath);
+            if ($targetPath === null) {
+                $this->log('Файл Aspro не найден, замена пропущена. Проверенные пути: ' . implode(', ', $replacement['target_candidates']));
                 continue;
             }
 
@@ -159,6 +165,21 @@ final class AsproTemplatePatcher
     private function getDocumentRootPath(string $relativePath): string
     {
         return rtrim((string)$_SERVER['DOCUMENT_ROOT'], '/') . '/' . ltrim($relativePath, '/');
+    }
+
+    /**
+     * @param array<int, string> $targetCandidates
+     */
+    private function resolveTargetPath(array $targetCandidates): ?string
+    {
+        foreach ($targetCandidates as $relativePath) {
+            $path = $this->getDocumentRootPath($relativePath);
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+
+        return null;
     }
 
     private function getModuleRootPath(string $relativePath): string
