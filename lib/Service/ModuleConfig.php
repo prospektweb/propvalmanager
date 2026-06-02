@@ -12,6 +12,8 @@ final class ModuleConfig
     public const PRODUCTS_IBLOCK_ID = 'PRODUCTS_IBLOCK_ID';
     public const OFFERS_IBLOCK_ID = 'OFFERS_IBLOCK_ID';
     public const PROPERTY_DESCRIPTIONS_HL_BLOCK_ID = 'PROPERTY_DESCRIPTIONS_HL_BLOCK_ID';
+    public const PROPERTY_DESCRIPTIONS_JSON_PATH = 'PROPERTY_DESCRIPTIONS_JSON_PATH';
+    public const PROPERTY_DESCRIPTIONS_JSON_VERSION = 'PROPERTY_DESCRIPTIONS_JSON_VERSION';
 
     public static function isEnabled(): bool
     {
@@ -51,5 +53,25 @@ final class ModuleConfig
     public static function setPropertyDescriptionsHlBlockId(int $hlBlockId): void
     {
         Option::set(self::MODULE_ID, self::PROPERTY_DESCRIPTIONS_HL_BLOCK_ID, (string)max(0, $hlBlockId));
+    }
+
+    public static function getPropertyDescriptionsJsonPath(): string
+    {
+        return (string)Option::get(self::MODULE_ID, self::PROPERTY_DESCRIPTIONS_JSON_PATH, '');
+    }
+
+    public static function setPropertyDescriptionsJsonPath(string $path): void
+    {
+        Option::set(self::MODULE_ID, self::PROPERTY_DESCRIPTIONS_JSON_PATH, $path);
+    }
+
+    public static function getPropertyDescriptionsJsonVersion(): string
+    {
+        return (string)Option::get(self::MODULE_ID, self::PROPERTY_DESCRIPTIONS_JSON_VERSION, '');
+    }
+
+    public static function setPropertyDescriptionsJsonVersion(string $version): void
+    {
+        Option::set(self::MODULE_ID, self::PROPERTY_DESCRIPTIONS_JSON_VERSION, $version);
     }
 }

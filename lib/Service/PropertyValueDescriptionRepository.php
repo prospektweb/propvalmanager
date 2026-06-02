@@ -103,7 +103,7 @@ final class PropertyValueDescriptionRepository
             throw new Exception('Не удалось создать описание: ' . implode('; ', $result->getErrorMessages()));
         }
 
-        PropertyDescriptionService::clearCache();
+        $this->refreshPublicData();
         return (int)$result->getId();
     }
 
@@ -116,7 +116,7 @@ final class PropertyValueDescriptionRepository
             throw new Exception('Не удалось обновить описание: ' . implode('; ', $result->getErrorMessages()));
         }
 
-        PropertyDescriptionService::clearCache();
+        $this->refreshPublicData();
     }
 
     /** @param array<string, mixed> $binding */
@@ -147,7 +147,7 @@ final class PropertyValueDescriptionRepository
             throw new Exception('Не удалось удалить описание: ' . implode('; ', $result->getErrorMessages()));
         }
 
-        PropertyDescriptionService::clearCache();
+        $this->refreshPublicData();
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -196,6 +196,12 @@ final class PropertyValueDescriptionRepository
         }
 
         return $dataClass;
+    }
+
+    private function refreshPublicData(): void
+    {
+        PropertyDescriptionService::clearCache();
+        (new PropertyDescriptionJsonExporter())->export();
     }
 
     private function getDataClass(): string
