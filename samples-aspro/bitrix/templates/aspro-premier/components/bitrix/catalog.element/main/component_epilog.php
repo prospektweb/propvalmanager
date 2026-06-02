@@ -3,7 +3,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     exit;
 }
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
 
 Loc::loadMessages(__FILE__);
 global $arTheme, $APPLICATION;
@@ -97,6 +99,11 @@ if (!Bitrix\Main\Loader::includeModule('blog') || !$templateData['SHOW_REVIEW'])
 
 TSolution\Functions::replaceListParams($arParams, ['PROPERTY_CODE' => 'PROPERTY_CODE']);
 TSolution\Extensions::init($arExtensions);
+
+if (Loader::includeModule('prospektweb.propvalmanager')) {
+    Asset::getInstance()->addCss('/local/modules/prospektweb.propvalmanager/assets/css/property-description-tooltips.css');
+    Asset::getInstance()->addJs('/local/modules/prospektweb.propvalmanager/assets/js/property-description-tooltips.js');
+}
 ?>
 
 <?php

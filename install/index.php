@@ -136,6 +136,8 @@ class prospektweb_propvalmanager extends CModule
 
     public function InstallFiles(): bool
     {
+        (new AsproTemplatePatcher())->apply();
+
         return true;
     }
 
