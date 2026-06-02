@@ -144,6 +144,71 @@ final class PropertyDescriptionService
     }
 
     /**
+     * @param mixed $urls
+     * @param mixed $texts
+     * @param mixed $titles
+     * @return array<int, array{URL:string,TEXT:string,TITLE:string}>
+     */
+    private static function normalizeLinks($urls, $texts, $titles): array
+    {
+        $urls = self::normalizeMultipleStringValue($urls);
+        $texts = self::normalizeMultipleStringValue($texts);
+        $titles = self::normalizeMultipleStringValue($titles);
+        $max = max(count($urls), count($texts), count($titles));
+        $links = [];
+
+        for ($index = 0; $index < $max; $index++) {
+            $url = $urls[$index] ?? '';
+            $text = $texts[$index] ?? '';
+            $title = $titles[$index] ?? '';
+            if ($url === '' && $text === '' && $title === '') {
+                continue;
+            }
+
+            $links[] = [
+                'URL' => $url,
+                'TEXT' => $text,
+                'TITLE' => $title,
+            ];
+        }
+
+        return $links;
+    }
+
+    /** @param mixed $value @return string[] */
+    private static function normalizeMultipleStringValue($value): array
+    {
+        if (!is_array($value)) {
+            $value = [$value];
+        }
+
+        $result = [];
+        foreach ($value as $item) {
+            $result[] = (string)$item;
+        }
+
+        return $result;
+    }
+
+
+    /** @param mixed $entity @param string[] $fields @return string[] */
+    private static function filterSelectFields($entity, array $fields): array
+    {
+        if (!method_exists($entity, 'hasField')) {
+            return $fields;
+        }
+
+        $result = [];
+        foreach ($fields as $field) {
+            if ($entity->hasField($field)) {
+                $result[] = $field;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @param array<int, array{IBLOCK_ID:int,PROPERTY_ID:int,PROPERTY_CODE:string,VALUE_XML_ID:string}> $keys
      * @return array<string, array<string, array<string, mixed>>>
      */
